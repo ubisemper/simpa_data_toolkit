@@ -8,6 +8,7 @@ import h5py
 import re
 import os
 import logging
+import shutil
 
 logging.disable(logging.CRITICAL)
 
@@ -134,6 +135,7 @@ class SimpaHelper:
         settings = sp.load_data_field(self.hdf5_file_path, Tags.SETTINGS)
         settings[Tags.WAVELENGTH] = settings[Tags.WAVELENGTHS][0]
         settings[Tags.IGNORE_QA_ASSERTIONS] = True
+        settings[Tags.SIMPA_OUTPUT_PATH] = self.hdf5_file_path
 
         settings.set_reconstruction_settings({
             Tags.ACOUSTIC_MODEL_BINARY_PATH: self.path_manager.get_matlab_binary_path(),
@@ -167,8 +169,9 @@ class SimpaHelper:
         sp.DelayAndSumAdapter(settings).run(device)
 
         path_to_hdf5_file = self.hdf5_file_path
-        file = load_hdf5(path_to_hdf5_file)
+        print('PATH', path_to_hdf5_file)
 
+        file = load_hdf5(path_to_hdf5_file)
         data = self._get_simpa_output(file)
         self.reconstructed_data = np.rot90(data[:, :], -1)
 
@@ -187,11 +190,6 @@ class SimpaHelper:
                     extracted_number = 999
                 np.savez(os.path.join(self.save_path, f'{extracted_number}_sinogram.npz'), sinogram=sinogram)
             return sinogram
-
-
-    def save_reconstruction(self):
-        pass
-
     def visualize_reconstruction(self):
         # TODO:Save figure
         # TODO: Log scale
@@ -222,3 +220,13 @@ class SimpaHelper:
 
         if show:
             plt.show()
+
+    def save_sinogram(self, sinogram, output_filename):
+        data_path = 'simulations/time_series_data/850'
+
+        shutil.copy(self.hdf5_file_path, output_filename)
+
+        # Open the copied file in read-write mode
+        with h5py.File(output_filename, 'a') as file:
+            # Modify the specific entry
+            file[data_path][...] = sinogram

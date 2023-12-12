@@ -86,8 +86,11 @@ def shadow_artifacts(image, shadow_position, shadow_width, shadow_intensity):
     noisy_image = image * (1 - mask)
     return noisy_image
 
-def reflection_artifact():
-    pass
+def reflection_artifact(image, noise_file, intensity_reduction):
+    dot_sinogram = np.roll(noise_file, 50, axis=1)
+    noise_sinogram = dot_sinogram * intensity_reduction
+    final_sinogram = image + noise_sinogram
+    return final_sinogram
 
 # TODO: INPUT EXPLANATION
 def ghost_artifacts(image, intensity_reduction, offset):
